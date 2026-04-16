@@ -1,0 +1,41 @@
+name: 🔒 Pipeline de Seguridad - Grupo 4
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # Job 1: Buscar secretos expuestos (contraseñas, tokens, etc.)
+  scan-secrets:
+    name: 🔍 Escanear Secretos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Buscar secretos con GitLeaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 2: Verificar calidad de código
+  code-quality:
+    name: ✅ Calidad de Código
+    runs-on: ubuntu-latest
+    needs: scan-secrets  # Solo corre si scan-secrets pasó
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      
+      - name: Super Linter (revisa sintaxis)
+        uses: github/super-linter@v5
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
